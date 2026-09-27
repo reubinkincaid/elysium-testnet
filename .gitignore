@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+
+# Local secrets. Conduit API key goes here once registered.
+.env
+.env.*
+!.env.example
+
+# Measurement output. Regenerate with `bun run blocktime`.
+data/*.json
+data/*.log

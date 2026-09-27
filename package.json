@@ -1,0 +1,22 @@
+{
+  "name": "elysium-testnet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Monitoring and research notes for the Kinetiq Elysium testnet",
+  "scripts": {
+    "probe": "bun run src/probe.ts",
+    "blocktime": "bun run src/blocktime.ts",
+    "feed": "bun run src/feed.ts",
+    "endpoints": "bun run src/endpoints.ts"
+  },
+  "dependencies": {
+    "viem": "^2.21.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "bun-types": "^1.1.0",
+    "typescript": "^5.6.0"
+  }
+}
