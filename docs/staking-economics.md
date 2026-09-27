@@ -83,7 +83,59 @@ A 300M-token bucket is the plausible source for any new program. A new
 Elysium program is plausible given they front-loaded 25% at genesis and ran
 recurring kPoints seasons. But it is speculation, not a known.
 
-## Practical read
+## Liquidity reality check (measured 2026-09-27)
+
+KNTQ is **spot only on Hyperliquid** — there is no KNTQ perp, so no leverage
+and no derivatives market to hedge or exit through. It is `tokenId 124` on
+spot, and the KNTQ/USDC pair is index `@334`.
+
+Prices at time of measurement:
+
+| | |
+|---|---|
+| HYPE | $93.32 |
+| 900 HYPE | ~$83,988 |
+| KNTQ best bid / ask | $0.32055 / $0.32086 |
+| spread | 0.097% |
+
+**The order book is thin relative to tier size.** Full visible depth on
+KNTQ/USDC:
+
+| Side | KNTQ | USDC |
+|---|---|---|
+| Bids | 172,181 | ~$55,082 |
+| Asks | **32,724** | **~$10,530** |
+
+That is the real constraint, and it cuts against the plan:
+
+- **Tier 1 (50,000 KNTQ, ~$16,045) exceeds the entire visible ask side.**
+  The whole book offers only ~32,724 KNTQ. Sweeping it gets you to tier
+  0.65. Buying 50,000 means pushing well past the book into whatever
+  follows, at an unknown and likely much worse price.
+- **Tier 5 (2,500,000 KNTQ, ~$800k) is ~76x the entire ask side.**
+- Bid side is 5x deeper than ask, so exiting is easier than entering — but
+  $55k of bid depth still means a 285M-token float is very thinly traded
+  relative to its own supply.
+
+**Implication:** do not size this position by the tier table. Size it by
+what the book can absorb. A market buy for tier 1 is likely to fill far
+worse than $0.32, and the realized entry price is unknown until you try.
+Practical options:
+
+1. **Accumulate in small clips** over time rather than sweeping.
+2. **Check for other venues before buying.** Kinetiq docs mention Lit and
+   Based as places to buy KNTQ — both unverified here, both may have deeper
+   books. Worth checking before assuming Hyperliquid spot is the only
+   option.
+3. **Use limit orders only.** On a book this thin, a market order is how you
+   overpay.
+4. **Reconsider whether tier 1 is even the goal.** It buys a 6% referral
+   share and up to 1,111 kmHYPE. That may not be worth the entry friction at
+   a worse-than-quoted price.
+
+Note this cuts against the "just buy 50k and stake" instinct. With 900 HYPE
+the capital is not the binding constraint — **liquidity is.**
+
 
 The "learn the protocol" path that actually pays is not the Elysium testnet.
 It is:
@@ -117,3 +169,30 @@ things worth doing:
 Low value: deploying testnet tokens, trying the faucet repeatedly, grinding
 transactions. There is no faucet contract deployed and ~2 tx/block means
 there is no competition for attention — nothing you do now is scarce.
+
+## Revised practical read (with 900 HYPE, no KNTQ)
+
+Capital is not the constraint. Liquidity is.
+
+900 HYPE ≈ $84,000. Tier 1 costs ~$16,045, so you clear it on paper several
+times over. But the KNTQ/USDC ask side totals only ~$10,530 — you cannot
+buy tier 1 in one market order without pushing deep past the visible book.
+
+So the sequence that actually makes sense:
+
+1. **Verify other venues first.** Kinetiq docs name Lit and Based as places
+   to buy KNTQ. Check their books before assuming Hyperliquid spot is it.
+   Deeper liquidity there changes everything.
+2. **If Hyperliquid spot is the only venue, clip in.** Limit orders only,
+   small size, accumulate. Never market-buy into a 32k-token ask side.
+3. **Do the sKNTQ stake in one deposit once you have 50k.** Staking is
+   presumably per-position; fragmented tiers may not aggregate. Unverified.
+4. **Mind the 7-day unstake.** Once in, you are committed for a week on exit.
+   Do not size a position you might need to move.
+5. **Keep HYPE as HYPE.** 900 HYPE is your working capital and your kHYPE
+   staking base. Converting a chunk to KNTQ at thin-book prices is a real
+   cost, not a free move.
+
+The Elysium read still stands and is unchanged: 50% of sequencer revenue
+funds KNTQ buybacks that accrue to sKNTQ holders. If you are going to hold
+sKNTQ, the question is entry price and timing, not whether the thesis works.
