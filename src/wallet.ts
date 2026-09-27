@@ -106,8 +106,6 @@ if (funded) {
   console.log("     Hyperliquid's testnet faucet: https://app.hyperliquid-testnet.xyz/drip");
   console.log("     (that one is a single unauthenticated claimDrip call, but it");
   console.log("      mints mock USDC, not HYPE)");
-  console.log("");
-  console.log(`  Paste this address when prompted:\n    ${addr}`);
 }
 
 // ------------------------------------------------------------- spend estimate
@@ -124,3 +122,34 @@ if (funded) {
 }
 console.log("\nGas is effectively free here. The binding constraint is legitimacy,");
 console.log("not HYPE — do not treat transaction count as the objective.");
+
+// ------------------------------------------------------------------ setup help
+// The faucet is a wallet-connect page, not an address form, so the key has to
+// live in a browser wallet. Print the exact network payload to add.
+if (!funded) {
+  console.log("\n## faucet setup (the faucet needs a connected wallet, not a pasted address)");
+  console.log("\n1. Read the private key (run this yourself, do not paste it anywhere):");
+  console.log("     grep ELYSIUM_TESTNET_KEY .env");
+  console.log("\n2. Import it into a browser wallet. Use a DEDICATED wallet or a");
+  console.log("   fresh browser profile — this is a throwaway key, so keep it away");
+  console.log("   from any wallet that holds real assets or a mainnet identity.");
+  console.log("\n3. Add the Elysium testnet network. MetaMask/Rabby/Phantom all accept");
+  console.log("   this JSON, and all three can add it by URL:");
+  const net = {
+    chainId: `0x${ELYSIUM_TESTNET.chainId.toString(16)}`,
+    chainName: ELYSIUM_TESTNET.name,
+    nativeCurrency: ELYSIUM_TESTNET.nativeCurrency,
+    // Public endpoint only. The Conduit URL carries the API key as a path
+    // segment, and this output gets pasted into a wallet UI and committed
+    // into READMEs — so redact it here rather than warning about it.
+    rpcUrls: [ELYSIUM_TESTNET.publicRpc],
+    blockExplorerUrls: [ELYSIUM_TESTNET.explorer],
+  };
+  console.log("");
+  console.log(JSON.stringify(net, null, 2));
+  console.log("\n   Using the public RPC. The keyed Conduit endpoint is faster and");
+  console.log("   rate-limit-free, but it embeds your API key in the URL, so do");
+  console.log("   not paste it into a wallet. The public one is fine for a faucet");
+  console.log("   claim.");
+  console.log(`\n4. Then open ${ELYSIUM_TESTNET.faucet} and claim once.`);
+}

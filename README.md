@@ -144,6 +144,24 @@ Once funded, re-run `bun run wallet` to confirm arrival. A ~0.1 HYPE balance
 covers roughly 66,000 transactions at 0.01 gwei, so topping up is rarely
 the problem.
 
+### Faucet setup: it needs a connected wallet
+
+The faucet is a **wallet-connect page, not an address form** — there is no
+field to paste into. The key has to exist in a browser wallet.
+
+1. Read the key locally: `grep ELYSIUM_TESTNET_KEY .env` (never paste it
+   anywhere, and never commit `.env`).
+2. Import it into a browser wallet. **Use a dedicated wallet or a fresh
+   browser profile** — this is a throwaway key, keep it away from any wallet
+   holding real assets or a mainnet identity.
+3. Add the Elysium testnet network. `bun run wallet` prints the exact JSON;
+   `chainId` is `0x185d9` (99801). Use the **public** RPC in the wallet, not
+   the keyed Conduit URL, so you are not pasting a secret into a wallet UI.
+4. Open the faucet, connect, claim once.
+
+`bun run wallet` prints this whole sequence whenever the address is unfunded,
+so it is the single command to re-check status at any point.
+
 ## Not pursued
 
 - **Self-hosted Nitro node.** Docker is not installed locally. Conduit's
