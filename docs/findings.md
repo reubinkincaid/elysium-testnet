@@ -196,6 +196,46 @@ Implementation note: 0xArchive perps return the ticker in `name`, not
 `symbol`. Reading `symbol` yields an empty perp set, which is indistinguishable
 from "no perps exist" — worth remembering when the numbers ever look wrong.
 
+## What the ETT/ENFT deployers are actually doing (measured 2026-09-27)
+
+Every Elysium ERC-20 in the sampled window is one of two contracts:
+
+| | count | bytecode | totalSupply |
+|---|---|---|---|
+| `ETT` "Elysium Test Token" | 13 | **identical** (sha256 `d4ff51a5…`) | 1,000,000 each |
+| `ENFT` "Elysium Test NFT" | 10 | **identical** (sha256 `16812902…`) | n/a (ERC-721 style) |
+
+**All 13 ETTs are byte-for-byte the same contract, and all 10 ENFTs are the
+same contract as each other.** They are not independently written — they are
+one template deployed repeatedly by different wallets, with different names
+that all resolve to the same literal "Elysium Test Token" / "ETT".
+
+**None of them trade.** Across the last 5,000 blocks there were 810 Transfer
+logs from 488 distinct tokens, and the 23 ETT/ENFT contracts account for them
+appearing in the list but generate **zero** transfer activity of their own.
+`totalSupply` is 1,000,000 and unmoved from deployment.
+
+**Read:** this is a deployment-count race, not a build effort. ~40 testnet
+users, one tutorial or template, everyone deploying the same throwaway token
+as fast as they can — presumably scoring "did you deploy a contract" under an
+assumed points criterion. There is no liquidity, no secondary market, and no
+attempt to make any of it trade.
+
+Two implications for strategy:
+
+1. **It confirms a points race is already underway** among the small user
+   base, which is the competition any real build is measured against.
+2. **It is the cheap play and it is already saturated.** ~13 people have done
+   it; the marginal deployer adds nothing. Whatever criteria they use, a
+   repeated template cannot plausibly be the scoring target — which is
+   another argument that the 25% blockspace-consumption share, not a
+   deploy-count leaderboard, is the thing worth building toward.
+
+Note also 488 distinct tokens with transfer activity chain-wide vs 38 seen in
+the ERC-20 metadata sweep — most testnet tokens are unidentified by
+`symbol()`, so any universe count is a lower bound.
+
+
 ## Blockspace economics (measured 2026-09-27, `bun run economics`)
 
 Prices the docs' claim that fees are tuned for 5–10 quote refreshes/sec, and
