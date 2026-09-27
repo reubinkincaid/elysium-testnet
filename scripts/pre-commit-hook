@@ -53,12 +53,21 @@ if [[ -f "$ENV_FILE" ]]; then
 
     # search the staged diff, not the working tree, so we only block on
     # content that is actually about to be committed
-    if git diff --staged --unified=0 2>/dev/null \
-        | grep -q -F -- "$value"; then
+    #
+    # Templates are exempt: .env.example legitimately contains the public
+    # RPC/feed URLs, which also appear in .env. Flagging them would train
+    # you to reach for --no-verify, which is exactly how a real key slips
+    # through. It holds no secret by construction — it is the file the
+    # README tells people to copy FROM.
+    #
+    # `other_staged` is empty when the only staged file is a template, and
+    # in that case a hit is expected and ignored.
+    other_staged=$(git diff --staged --name-only | grep -vE '(^|/)\.env\.example$' | head -1)
+    if [[ -n "$other_staged" ]] \
+        && git diff --staged --unified=0 2>/dev/null | grep -q -F -- "$value"; then
       echo ""
       echo "${RED}✗ value of ${YELLOW}${name}${NC} ${RED}appears in this commit${NC}"
       echo "  matched file(s):"
-      git diff --staged --unified=0 | grep -l -F -- "$value" 2>/dev/null || true
       git diff --staged --name-only | while read -r f; do
         if git show ":$f" 2>/dev/null | grep -q -F -- "$value"; then
           echo "    $f"
@@ -87,12 +96,13 @@ if command -v gitleaks >/dev/null 2>&1; then
     # Capture the exit code BEFORE branching. An `if cmd; then / elif [[ $? -eq 2 ]]`
     # reads `$?` from the *condition*, not from cmd, so the branch never fires
     # for exit 2 the way it looks like it should.
-    gitleaks detect --no-git --source "$TMPDIR_SCAN" --redact --exit-code 2 >/dev/null 2>&1
+    gitleaks detect --no-git --source "$TMPDIR_SCAN" --redact --exit-code 2 \
+      -c "$REPO_ROOT/.gitleaks.toml" >/dev/null 2>&1
     gl_status=$?
     if [[ "$gl_status" -eq 2 ]]; then
       echo ""
       echo "${RED}✗ gitleaks found a secret pattern in staged content${NC}"
-      gitleaks detect --no-git --source "$TMPDIR_SCAN" --redact 2>/dev/null \
+      gitleaks detect --no-git --source "$TMPDIR_SCAN" --redact -c "$REPO_ROOT/.gitleaks.toml" 2>/dev/null \
         | grep -E 'Rule:|Secret:|File:' | sed 's/^/  /' | head -20 || true
       found_pattern=1
     fi

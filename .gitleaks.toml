@@ -1,0 +1,25 @@
+# gitleaks configuration.
+#
+# Layer 2 of the pre-commit secret scan. Layer 1 (exact match against the
+# real values in .env) is stronger and is implemented in
+# scripts/pre-commit-hook.
+#
+# The only finding on a fresh clone is a false positive: the default
+# generic api-key rule matches across the comment block in .env.example
+# that documents which URL a key attaches to. There is no credential
+# there — every secret in this repo lives in .env, which is gitignored.
+#
+# Verified before adding this entry: a fresh clone of the full history
+# contains zero real key values, and gitleaks reports "no leaks found"
+# with this allowlist in place.
+#
+# If you add a real secret to any tracked file, do NOT widen this
+# allowlist to make the scan pass. That is the failure mode this whole
+# mechanism exists to prevent.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Comment text in the env template, not a credential"
+paths = ['''^\.env\.example$''']
