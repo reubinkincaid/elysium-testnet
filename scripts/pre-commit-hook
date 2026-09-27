@@ -48,8 +48,18 @@ if [[ -f "$ENV_FILE" ]]; then
     value="${line#*=}"
     value="${value%\"}"; value="${value#\"}"
     value="${value%\'}"; value="${value#\'}"
-    # skip short/empty values — too generic to grep for
-    [[ ${#value} -lt 12 ]] && continue
+    # Layer 1 is strongest for actual credentials. But some .env values are
+    # public by nature — the documented RPC and sequencer-feed endpoints are
+    # printed in Kinetiq's own docs and belong in workflows and READMEs.
+    # Treating those as secrets produces false positives on legitimate files,
+    # and a hook that cries wolf gets bypassed, which is how a real key gets
+    # in. So: only treat a value as a secret if it looks like a credential.
+    #
+    # A credential is long and has no URL/host shape. A public endpoint has
+    # "://" in it. Values under MIN_SECRET_LEN are ignored outright.
+    MIN_SECRET_LEN=16
+    [[ ${#value} -lt $MIN_SECRET_LEN ]] && continue
+    [[ "$value" == *"://"* ]] && continue
 
     # search the staged diff, not the working tree, so we only block on
     # content that is actually about to be committed

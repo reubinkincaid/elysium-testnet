@@ -1,0 +1,74 @@
+name: log blocktime
+
+# Appends one row to data/blocktime.csv per run and commits it.
+#
+# Scheduling notes — both deliberate, from GitHub's documented behaviour:
+#
+#   * Off the top of the hour. The `schedule` event "can be delayed during
+#     periods of high loads"; the top of the hour is a known high-load point.
+#     The measurement does not care what minute it runs at, so pick a quiet one.
+#
+#   * Away from 13:30 UTC (09:30 America/New_York). That is the US equity open,
+#     the single busiest moment for GitHub Actions, because every trading
+#     workflow in the world fires at once. This workflow measures block time
+#     over ~90s of chain history, so it is completely insensitive to *when* it
+#     runs — there is no reason to compete for that slot.
+#
+#   * Public repo => standard GitHub-hosted runners are free, so this costs no
+#     minutes from the account allotment regardless of how much is used.
+#
+#   * Public repos auto-disable scheduled workflows after 60 days without
+#     repository activity. This workflow commits on every run, so it *is*
+#     repository activity and keeps itself alive. If data ever stops arriving,
+#     check whether the workflow got disabled rather than assuming a bug.
+#
+# No secrets are used or needed: it reads the public Kinetiq RPC endpoint, not
+# the keyed Conduit one. Secret scanning and the pre-commit hook both apply to
+# the commit this makes.
+
+on:
+  schedule:
+    # 07:23 and 19:23 UTC — off-hour, and nowhere near any market open.
+    - cron: "23 7,19 * * *"
+  workflow_dispatch: # allow a manual run from the Actions tab
+
+permissions:
+  contents: write # required to commit the CSV
+
+concurrency:
+  group: log-blocktime
+  cancel-in-progress: false
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Append block-time sample
+        # Uses the public endpoint via ELYSIUM_RPC, so no key is required and
+        # none is exposed to the runner.
+        env:
+          ELYSIUM_RPC: https://testnet-rpc.elysium.kinetiq.xyz
+          ELYSIUM_TESTNET_KEY: ""
+        run: bun run log
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/blocktime.csv; then
+            echo "no change in data/blocktime.csv — nothing to commit"
+            exit 0
+          fi
+          git add data/blocktime.csv
+          git commit -m "chore: block-time sample $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

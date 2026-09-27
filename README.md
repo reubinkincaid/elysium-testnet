@@ -108,6 +108,8 @@ bun install
 bun run probe       # chain health + which contracts are deployed
 bun run endpoints   # compare Kinetiq vs Conduit RPC, latency
 bun run blocktime   # measure block time vs the 100-200ms claim
+bun run log         # append one row to data/blocktime.csv
+bun run log:summary # trend the committed series
 bun run feed        # consume the Conduit sequencer feed
 bun run bridge      # bridge route math + retryable surface, both chains
 bun run wallet      # testnet key: generate/load, show balances on both chains
@@ -334,6 +336,47 @@ return 404). Deployed contracts therefore appear as unnamed `Contract` chips.
 `forge verify-contract` cannot succeed, so this repo and `deployed.json` are
 the source of truth for what was deployed. `deploy.sh` has a `VERIFY_API`
 flag to re-probe and enable it if that ever changes.
+
+## Block-time series
+
+`bun run log` appends one row to `data/blocktime.csv`; `bun run log:summary`
+trends it. A GitHub Actions workflow runs twice a day and commits the CSV, so
+the series lives in git history and the answer to "does Elysium converge on its
+documented 100–200ms blocks" becomes a trend rather than an anecdote.
+
+Scheduling is deliberate, from GitHub's documented behaviour:
+
+- **Off the top of the hour** — the `schedule` event is delayed under high load,
+  and the top of the hour is a known high-load point.
+- **07:23 and 19:23 UTC** — nowhere near 13:30 UTC (09:30 New York), the US
+  equity open, which is the busiest moment for Actions because every trading
+  workflow fires at once. This measurement averages ~90s of chain history, so
+  it is completely insensitive to *when* it runs.
+- **No secrets** — it reads the public Kinetiq endpoint, not the keyed Conduit
+  one, so nothing sensitive reaches the runner.
+- **Free** — standard runners in public repos cost no account minutes.
+
+Scheduled workflows in public repos auto-disable after 60 days of inactivity.
+This one commits on every run, so it *is* activity and keeps itself alive. If
+data stops arriving, check whether the workflow was disabled before assuming a
+bug.
+
+### What the columns mean, and one thing they don't
+
+`blockTimeMs` is an **aggregate over a 200-block window**, not a per-block
+measurement. That distinction matters: Elysium's block timestamps have ~1s
+granularity and consecutive block numbers routinely share a timestamp, because
+Nitro emits several blocks per parent-chain tick. A per-block gap distribution
+is therefore mostly zeros with occasional ~1000ms jumps — its p50 is 0 and its
+p95 is 1000, and neither number means anything. An earlier version of this
+script reported exactly that and it was meaningless.
+
+`blocksPerSec` and `ticksPerSec` are the honest primitives: blocks produced per
+second, and distinct timestamps per second.
+
+`gasUsedPct` sits around **4e-9%** of the gas limit. The chain is empty, which
+makes every other number here look healthy for reasons that have nothing to do
+with real capacity.
 
 ## Not pursued
 
