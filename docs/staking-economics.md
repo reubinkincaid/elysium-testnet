@@ -267,3 +267,75 @@ $10k ask side in minutes. **Do not use short durations here.**
    crossing 50k in one TWAP — smaller TWAPs are easier to fill inside 3%.
 5. Re-verify the book before starting. It moved from 32,724 to 31,252 KNTQ
    between my two measurements in minutes; depth is not stable.
+
+## Price action into the entry decision (measured 2026-09-27)
+
+Daily candles for KNTQ/USDC (`@334`), Aug 17 – Sep 27. The picture: a
+175% run off the ~$0.12 lows in early August, a spike high of **$0.35253 on
+Sep 23**, then a stall.
+
+```
+date         close    chg%     volume   trades   avg trade $
+2026-09-17  0.21840  11.67   8,727,044  11794     162
+2026-09-18  0.26477  21.23   8,458,128  17249     130
+2026-09-19  0.29361  10.89   7,809,851  25199      91
+2026-09-20  0.32019   9.05   4,526,474  17782      82
+2026-09-21  0.30549  -4.59   6,684,504  23265      88
+2026-09-22  0.34325  12.36   4,543,067  24115      65
+2026-09-23  0.33579  -2.17   5,300,053  30989      57   <- high 0.35253
+2026-09-24  0.31554  -6.03   3,374,720  19119      56
+2026-09-25  0.31760   0.65   2,464,478  19818      39
+2026-09-26  0.32052   0.92   2,206,437  17329      41
+2026-09-27  0.32087   0.11     175,079   1941      29
+```
+
+### The thing worth noticing: participation is draining
+
+Volume fell from ~8.7M (Sep 17) to ~2.2M (Sep 26) — a **75% decline** —
+while price went *up* 47%. Price made its high on the lowest volume of the
+entire rally. That is the classic signature of a move running out of
+buyers, not gathering steam.
+
+Sharper still, **average trade size collapsed from ~$162 to ~$29** over the
+same stretch. Trade *count* is roughly flat (11,794 → 17,329), so the
+participants who remain are trading progressively smaller clips. The rally
+was carried by large tickets early; it is now retail-scale churn.
+
+Implication: the $0.35 stall is not indecision between two strong sides.
+It is a thin, low-conviction book with a large resting bid beneath it.
+
+### Current structure
+
+| | |
+|---|---|
+| Last | $0.32087 |
+| 3-day range | $0.3105 – $0.3263 (~5%) |
+| 24h range | $0.3200 – $0.3223 (~0.7%) — very compressed |
+| Bids | 163,489 KNTQ (~$52,300) |
+| Asks | 32,686 KNTQ (~$10,517) |
+
+The bid side is **5x the ask side** and has been stable across measurements
+(172k → 163k over ~20 min). That asymmetry is a standing exit liquidity for
+shorts and a cushion under price — it is why price held $0.31 rather than
+breaking down after Sep 23.
+
+But note the corollary: **almost nobody is offering to sell into this
+rally.** Thin asks can mean bullish conviction, or it can mean the top is
+unloaded and everyone is waiting. The declining average trade size argues
+more toward the latter.
+
+### On the entry question
+
+The bullish case is real — Elysium is a genuine new revenue line, and 50% of
+sequencer revenue funds KNTQ buybacks that accrue to sKNTQ holders. The
+tactical case is weaker:
+
+- You are buying after a 175% run, near the high, on falling volume.
+- A pullback may never come if the broader market stays bid, as noted.
+- If it does, the $0.31–$0.32 shelf is where the bid side sits.
+
+The genuinely patient play is to let the consolidation resolve. A close above
+~$0.353 confirms the breakout; a loss of ~$0.310 opens the shelf. Either
+resolves the question, and the TWAP plan means you do not need to catch the
+exact bottom — you can start a long-duration TWAP once direction is clearer
+and still fill inside the 3% cap, because TWAP works over hours, not ticks.
