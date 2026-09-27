@@ -9,6 +9,7 @@
     "blocktime": "bun run src/blocktime.ts",
     "log": "bun run src/log.ts",
     "log:summary": "bun run src/logSummary.ts",
+    "arb:feasibility": "bun run src/arbFeasibility.ts",
     "feed": "bun run src/feed.ts",
     "endpoints": "bun run src/endpoints.ts",
     "bridge": "bun run src/bridge.ts",

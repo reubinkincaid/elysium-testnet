@@ -337,6 +337,50 @@ return 404). Deployed contracts therefore appear as unnamed `Contract` chips.
 the source of truth for what was deployed. `deploy.sh` has a `VERIFY_API`
 flag to re-probe and enable it if that ever changes.
 
+## Cross-venue arb: feasibility, and what actually gates it
+
+`bun run arb:feasibility` measures the decisive number rather than assuming it.
+
+**The constraint is the Elysium leg, not the data.** Elysium's block time is
+~440ms (from `data/blocktime.csv`); HyperCore's is ~70ms. An Elysium AMM quoting
+against HyperCore therefore reprices ~440ms late, and that delay is the whole
+window. Measured price movement inside 440ms, from trade data, last hour:
+
+| sym | trades/s | p50 | p90 | p99 | max | taker | maker |
+|---|---|---|---|---|---|---|---|
+| HYPE | 1.6 | 0.00 | 1.53 | 4.59 | 4.70 | 4.00bp | **-0.10bp** |
+| PURR | 1.3 | 5.99 | 15.33 | 29.91 | 43.14 | 3.50bp | **-0.30bp** |
+| BTC | 3.3 | 0.12 | 0.83 | 2.13 | 2.13 | 4.32bp | **-0.10bp** |
+| ETH | 1.9 | 0.37 | 3.73 | 4.47 | 4.47 | 3.50bp | **-0.10bp** |
+| SOL | 0.9 | 0.81 | 3.26 | 8.14 | 9.78 | 4.00bp | +0.40bp |
+
+All values in basis points. Fees are per-notional (price x size), measured
+from actual fills — the fee is denominated in USDC, so comparing it to price
+alone is wrong by orders of magnitude.
+
+**Maker fees are negative on most perps** — a small rebate. That matters: a
+passive leg costs nothing and pays you rather than taxing you.
+
+**At an assumed 30bp AMM spread, the required dislocation is ~33.5bp.**
+Nothing clears it. BTC and HYPE are 15-25x too small. PURR is the only symbol
+where the tail even approaches the bar — p99 of 29.9bp against a 33.5bp
+requirement, and that is 1-in-100 trades requiring you to be positioned with
+inventory on both legs to catch it.
+
+**But the spread is the dominant unknown and it is not measurable until an AMM
+exists.** A thin new market quoting 200bp wide would need a 200bp move; a
+competitive one at 5bp would need ~9bp, which several symbols would clear. That
+single unmeasured input flips the conclusion, and it is the first thing to
+measure at mainnet rather than assume.
+
+Three things would improve the picture: a smaller block time (at 200ms the
+required move roughly halves), a tighter spread, and posting passively on one
+leg to collect the rebate instead of paying taker.
+
+**Conclusion: do not build the Elysium arb executor yet.** The measurement
+tool is the deliverable. Build the strategy at mainnet, against the live spread,
+once there is something to quote against.
+
 ## Block-time series
 
 `bun run log` appends one row to `data/blocktime.csv`; `bun run log:summary`
