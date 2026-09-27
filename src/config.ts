@@ -7,8 +7,11 @@ export const ELYSIUM_TESTNET = {
   publicRpc: "https://testnet-rpc.elysium.kinetiq.xyz",
 
   // Conduit-operated endpoints. Conduit runs the sequencer for Elysium.
-  conduitRpc: "https://rpc-elysium-testnet.t.conduit.xyz",
-  conduitFeed: "wss://relay-elysium-testnet.t.conduit.xyz/",
+  // Both work unauthenticated, but an API key lifts rate limits.
+  // Free tier: 100M compute units/month, no rate limit.
+  // Register at https://app.conduit.xyz/nodes
+  conduitRpcBase: "https://rpc-elysium-testnet.t.conduit.xyz",
+  conduitFeedBase: "wss://relay-elysium-testnet.t.conduit.xyz/",
 
   parentChain: {
     chainId: 998,
@@ -21,6 +24,42 @@ export const ELYSIUM_TESTNET = {
   faucet: "https://elysium.kinetiq.xyz/testnet-faucet",
   docs: "https://elysium.kinetiq.xyz/docs",
 } as const;
+
+/**
+ * Conduit API key from .env, if present. Never commit it.
+ *
+ * The key is optional: both endpoints answer without one. Supplying it
+ * raises the rate limit, which is the reason to have one at all.
+ * A malformed key is worse than none — the endpoint returns
+ * -32401 "invalid rpc key" rather than falling back.
+ */
+export const conduitKey = process.env.CONDUIT_API_KEY?.trim();
+
+export const CONDUIT_RPC = conduitKey
+  ? `${ELYSIUM_TESTNET.conduitRpcBase}/${conduitKey}`
+  : ELYSIUM_TESTNET.conduitRpcBase;
+
+export const CONDUIT_FEED = conduitKey
+  ? `${ELYSIUM_TESTNET.conduitFeedBase}${conduitKey}`
+  : ELYSIUM_TESTNET.conduitFeedBase;
+
+export const hasConduitKey = Boolean(conduitKey);
+
+/** Default RPC for scripts that just need to read the chain. */
+export const DEFAULT_RPC = process.env.ELYSIUM_RPC ?? ELYSIUM_TESTNET.publicRpc;
+
+/**
+ * Strip an API key from a URL so it can be printed.
+ *
+ * Both the RPC and feed endpoints carry the key as a trailing path segment.
+ * Anything that logs a URL must go through this.
+ */
+export function redactKey(url: string): string {
+  return url.replace(
+    /\/([A-Za-z0-9]{4})[A-Za-z0-9]{8,}(?=$|[/?#])/,
+    (_match, prefix: string) => `/${prefix}…REDACTED`,
+  );
+}
 
 /**
  * Contract addresses published in the Elysium docs for the testnet.

@@ -5,10 +5,10 @@
  *   bun run feed [seconds]
  */
 import WebSocket from "ws";
-import { ELYSIUM_TESTNET } from "./config.ts";
+import { CONDUIT_FEED, hasConduitKey, redactKey } from "./config.ts";
 
 const DURATION_S = Number(process.argv[2] ?? 20);
-const url = process.env.ELYSIUM_FEED ?? ELYSIUM_TESTNET.conduitFeed;
+const url = process.env.ELYSIUM_FEED ?? CONDUIT_FEED;
 
 interface FeedItem {
   sequenceNumber: number;
@@ -38,7 +38,7 @@ const KIND: Record<number, string> = {
 };
 
 console.log(`# Sequencer feed — ${DURATION_S}s — ${new Date().toISOString()}`);
-console.log(`source: ${url}\n`);
+console.log(`source: ${redactKey(url)}${hasConduitKey ? "  (key loaded)" : "  (no key)"}\n`);
 console.log("Wire format is {version, messages[]}, NOT JSON-RPC. Messages arrive on");
 console.log("connect and are batched, so there is no request to make. Use the https");
 console.log("endpoint for JSON-RPC calls.\n");

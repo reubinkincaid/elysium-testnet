@@ -2,11 +2,14 @@
  * Endpoint liveness check across every RPC we know about.
  * Answers: which endpoints exist, do they agree, and how fast are they.
  */
-import { ELYSIUM_TESTNET, CLAIMS } from "./config.ts";
+import { ELYSIUM_TESTNET, CLAIMS, CONDUIT_RPC, hasConduitKey, redactKey } from "./config.ts";
 
 const ENDPOINTS = [
   { label: "Kinetiq (documented)", url: ELYSIUM_TESTNET.publicRpc },
-  { label: "Conduit (operator)", url: ELYSIUM_TESTNET.conduitRpc },
+  {
+    label: hasConduitKey ? "Conduit (operator, key)" : "Conduit (operator, no key)",
+    url: CONDUIT_RPC,
+  },
 ];
 
 async function rpc(url: string, method: string, params: unknown[] = []) {
@@ -28,7 +31,12 @@ async function rpc(url: string, method: string, params: unknown[] = []) {
 const fmt = (n: number, d = 0) => n.toLocaleString("en-US", { maximumFractionDigits: d });
 
 console.log(`# Elysium testnet endpoints — ${new Date().toISOString()}\n`);
-console.log(`chainId ${ELYSIUM_TESTNET.chainId} · gas ${ELYSIUM_TESTNET.nativeCurrency.symbol}\n`);
+console.log(`chainId ${ELYSIUM_TESTNET.chainId} · gas ${ELYSIUM_TESTNET.nativeCurrency.symbol}`);
+console.log(
+  hasConduitKey
+    ? "Conduit API key loaded from .env (rate limit lifted)\n"
+    : "No Conduit API key in .env — endpoints work but stay rate limited\n",
+);
 
 for (const ep of ENDPOINTS) {
   try {
@@ -43,14 +51,14 @@ for (const ep of ENDPOINTS) {
     const ok = chainId === ELYSIUM_TESTNET.chainId;
 
     console.log(`${ep.label}`);
-    console.log(`  url         ${ep.url}`);
+    console.log(`  url         ${redactKey(ep.url)}`);
     console.log(`  chainId     ${chainId} ${ok ? "OK" : `MISMATCH (want ${ELYSIUM_TESTNET.chainId})`}`);
     console.log(`  head        ${fmt(height)}`);
     console.log(`  client      ${version.value}`);
     console.log(`  latency     ${chain.ms.toFixed(0)}ms\n`);
   } catch (err) {
     console.log(`${ep.label}`);
-    console.log(`  url         ${ep.url}`);
+    console.log(`  url         ${redactKey(ep.url)}`);
     console.log(`  FAILED      ${(err as Error).message}\n`);
   }
 }

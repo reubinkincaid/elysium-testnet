@@ -3,9 +3,9 @@
  *
  *   bun run probe
  */
-import { ELYSIUM_TESTNET, ADDRESSES, NOT_YET_LIVE } from "./config.ts";
+import { ELYSIUM_TESTNET, ADDRESSES, NOT_YET_LIVE, DEFAULT_RPC } from "./config.ts";
 
-const url = process.env.ELYSIUM_RPC ?? ELYSIUM_TESTNET.publicRpc;
+const url = DEFAULT_RPC;
 
 async function rpc<T>(method: string, params: unknown[] = []): Promise<T> {
   const res = await fetch(url, {

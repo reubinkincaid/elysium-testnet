@@ -6,7 +6,7 @@
  *
  *   bun run blocktime [seconds]
  */
-import { CLAIMS, ELYSIUM_TESTNET } from "./config.ts";
+import { CLAIMS, DEFAULT_RPC } from "./config.ts";
 
 const DURATION_S = Number(process.argv[2] ?? 30);
 
@@ -49,7 +49,7 @@ function stats(xs: number[]) {
   };
 }
 
-const url = process.env.ELYSIUM_RPC ?? ELYSIUM_TESTNET.publicRpc;
+const url = DEFAULT_RPC;
 
 console.log(`# Block time over ${DURATION_S}s — ${new Date().toISOString()}`);
 console.log(`source: ${url}\n`);
