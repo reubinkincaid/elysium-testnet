@@ -2,7 +2,7 @@ node_modules/
 .DS_Store
 *.log
 
-# Local secrets. Conduit API key goes here once registered.
+# Local secrets. Conduit + 0xArchive keys and the testnet wallet key.
 .env
 .env.*
 !.env.example
@@ -10,3 +10,16 @@ node_modules/
 # Measurement output. Regenerate with `bun run blocktime`.
 data/*.json
 data/*.log
+
+# Foundry build artifacts. Regenerate with `forge build`.
+# Committed deliberately: src/, test/, script/, foundry.toml, deploy.sh,
+# and deployed.json. Not committed: out/, cache/, and the forge-std clone
+# (tracked as a submodule — see .gitmodules).
+foundry/out/
+foundry/cache/
+foundry/broadcast/
+foundry/deployed.json.bak
+
+# Foundry keys, if anyone ever adds one. Keep keys in ../.env only.
+foundry/.env
+foundry/*.key

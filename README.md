@@ -206,6 +206,39 @@ field to paste into. The key has to exist in a browser wallet.
 `bun run wallet` prints this whole sequence whenever the address is unfunded,
 so it is the single command to re-check status at any point.
 
+## Contracts (`foundry/`)
+
+Two Solidity contracts, built with Foundry. Neither has an owner, a mint role,
+an upgrade path, or a privileged function.
+
+**`ElysiumStreamingToken.sol`** (EST) — fixed 1,000,000 initial supply, then
+1 EST/sec accruing from `lastAccrual` to `block.timestamp`, distributed pro-rata
+by supply share. `accrue()` is permissionless. The point is that state is
+*maintained over time* rather than set once, which the other 13 Elysium testnet
+tokens do not do. Streaming is only viable because blockspace is near-free here.
+
+**`ElysiumQuoteBook.sol`** — two-sided quote per token with a `minInterval`
+cadence dial, publishes spread in bps, and reports **staleness** rather than
+pretending an unrefreshed quote is live. `tryRefresh()` never reverts, so a
+keeper loop can call every block safely. No oracle and no price feed: quotes
+are whatever a caller publishes, so this must not be used as a price source.
+
+```bash
+cd foundry
+forge test              # 30 tests
+forge build
+./deploy.sh             # broadcasts to testnet — needs approval
+```
+
+`deploy.sh` reads `ELYSIUM_TESTNET_KEY` from the repo `.env` and derives
+`0xa50a2F34Fbbead8DeFC22963Dc77b77EE91B8D2E` (the same funded key
+`bun run wallet` reports). It never echoes the key, and only that one line of
+`.env` is sourced. Addresses land in `foundry/deployed.json`.
+
+`forge-std` is a git submodule, not vendored. Build artifacts
+(`out/`, `cache/`, `broadcast/`) are gitignored; `src/`, `test/`,
+`foundry.toml`, `deploy.sh` and `deployed.json` are committed.
+
 ## Not pursued
 
 - **Self-hosted Nitro node.** Docker is not installed locally. Conduit's
