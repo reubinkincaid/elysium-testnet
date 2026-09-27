@@ -16,9 +16,14 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-# shellcheck disable=SC1090
-source <(grep -E '^ELYSIUM_TESTNET_KEY=' "$ENV_FILE")
-if [[ -z "${ELYSIUM_TESTNET_KEY:-}" ]]; then
+# Read the key without sourcing the rest of .env, so the Conduit and
+# 0xArchive keys never enter this shell.
+#
+# Note: `set -u` makes sourcing an unset var fatal, and a bare
+# `source <(grep ...)` can leave the var unset when the grep matches
+# nothing under `pipefail`. So read it into a local, defaulting to empty.
+ELYS_KEY="$(grep -E '^ELYSIUM_TESTNET_KEY=' "$ENV_FILE" | cut -d= -f2- | head -1 || true)"
+if [[ -z "$ELYS_KEY" ]]; then
   echo "error: ELYSIUM_TESTNET_KEY not set in .env (run: bun run wallet)" >&2
   exit 1
 fi
@@ -26,7 +31,7 @@ fi
 RPC="https://testnet-rpc.elysium.kinetiq.xyz"
 EXPLORER="https://elysium.kinetiq.xyz/testnet-explorer"
 CHAIN_ID=99801
-PK="$ELYSIUM_TESTNET_KEY"
+PK="$ELYS_KEY"
 ADDR=$(cast wallet address --private-key "$PK")
 DO_VERIFY=1
 [[ "${1:-}" == "--no-verify" ]] && DO_VERIFY=0
@@ -36,29 +41,59 @@ echo "balance   $(cast balance "$ADDR" --rpc-url "$RPC" | awk '{print $1/1e18}')
 echo "chainId   $CHAIN_ID"
 echo
 
+# Extract the deployed address from the RECEIPT, not from forge's stdout.
+# `forge create` echoes the constructor address, the tx hash, and other
+# 20-byte hex words, so `grep -oE '0x[a-f0-9]{40}' | tail -1` can capture the
+# wrong one — it returned a pre-existing address and left the real contract
+# looking like an empty account. Read `Deployed to:` or fall back to the
+# receipt via cast.
+deploy_addr_from_log() {
+  local log=$1 tx=$2
+  local addr
+  addr=$(grep -oE 'Deployed to: +0x[a-fA-F0-9]{40}' "$log" | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
+  if [[ -z "$addr" ]]; then
+    addr=$(cast receipt "$tx" --rpc-url "$RPC" --json 2>/dev/null \
+           | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
+  fi
+  echo "$addr"
+}
+
 # 1,000,000 OEX initial supply; 1 OEX/sec across the whole supply.
 echo "=== ElysiumStreamingToken (OEX) ==="
-OEX=$(forge create src/ElysiumStreamingToken.sol:ElysiumStreamingToken \
+forge create src/ElysiumStreamingToken.sol:ElysiumStreamingToken \
   --rpc-url "$RPC" --private-key "$PK" \
   --broadcast \
   --constructor-args 1000000000000000000000000 1000000000000000000 "$ADDR" \
-  2>&1 | tee /tmp/oex_deploy.log | grep -oE '0x[a-fA-F0-9]{40}' | tail -1)
-OEX_TX=$(grep -oE '0x[a-fA-F0-9]{64}' /tmp/oex_deploy.log | head -1)
+  > /tmp/oex_deploy.log 2>&1
+OEX_TX=$(grep -oE 'transactionHash: +0x[a-fA-F0-9]{64}' /tmp/oex_deploy.log | grep -oE '0x[a-fA-F0-9]{64}' | head -1)
+OEX=$(deploy_addr_from_log /tmp/oex_deploy.log "$OEX_TX")
 echo "address   $OEX"
 echo "tx        $OEX_TX"
-grep -iE 'gas|block number|transaction' /tmp/oex_deploy.log | head -3
+grep -iE 'gas|block number' /tmp/oex_deploy.log | head -3
 
 echo
 echo "=== ElysiumQuoteBook (5s min interval) ==="
-EQB=$(forge create src/ElysiumQuoteBook.sol:ElysiumQuoteBook \
+forge create src/ElysiumQuoteBook.sol:ElysiumQuoteBook \
   --rpc-url "$RPC" --private-key "$PK" \
   --broadcast \
   --constructor-args 5 \
-  2>&1 | tee /tmp/eqb_deploy.log | grep -oE '0x[a-fA-F0-9]{40}' | tail -1)
-EQB_TX=$(grep -oE '0x[a-fA-F0-9]{64}' /tmp/eqb_deploy.log | head -1)
+  > /tmp/eqb_deploy.log 2>&1
+EQB_TX=$(grep -oE 'transactionHash: +0x[a-fA-F0-9]{64}' /tmp/eqb_deploy.log | grep -oE '0x[a-fA-F0-9]{64}' | head -1)
+EQB=$(deploy_addr_from_log /tmp/eqb_deploy.log "$EQB_TX")
 echo "address   $EQB"
 echo "tx        $EQB_TX"
-grep -iE 'gas|block number|transaction' /tmp/eqb_deploy.log | head -3
+grep -iE 'gas|block number' /tmp/eqb_deploy.log | head -3
+
+# Fail closed: an address with no code is not a deployment.
+for pair in "ElysiumStreamingToken:$OEX" "ElysiumQuoteBook:$EQB"; do
+  name=${pair%%:*}; addr=${pair##*:}
+  if [[ -z "$addr" ]] || [[ "$(cast code "$addr" --rpc-url "$RPC")" == "0x" ]]; then
+    echo "error: $name has no code at '$addr' — refusing to report success" >&2
+    exit 1
+  fi
+done
+echo
+echo "both contracts have code"
 
 # ---------------------------------------------------------------- verify
 # The Elysium testnet explorer exposes no verification API. Probed 2026-09-27:

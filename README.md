@@ -237,6 +237,22 @@ forge build
 ./deploy.sh             # broadcasts to testnet — needs approval
 ```
 
+**Deployed (2026-09-27):**
+
+| | address | tx | code |
+|---|---|---|---|
+| `ElysiumStreamingToken` (OEX) | `0xdc5a850c1cce4e7fe6a35976763698cd554864be` | `0xf5c50e65…d7` | 2,821 B |
+| `ElysiumQuoteBook` | `0xb5681268c210e14732e7c1e0a0847eef764dbc5e` | `0x567a4b58…57` | 1,898 B |
+
+Both verified live on-chain: quote round-trip, cadence rejection, `tryRefresh`
+returning false without reverting, crossed-book rejection, accrual over elapsed
+time, `transfer` conserving balance, `approve`/`allowance`, and reverts on
+overspend, over-allowance, and transfer-to-zero. `deployed.json` is the record.
+
+> **Note:** the deployed bytecode predates the `EST:` → `OEX:` revert-string
+> rename, so the live contract still reverts with the old prefix. The change is
+> cosmetic and affects only revert data; a redeploy would pick it up.
+
 `deploy.sh` reads `ELYSIUM_TESTNET_KEY` from the repo `.env` and derives
 `0xa50a2F34Fbbead8DeFC22963Dc77b77EE91B8D2E` (the same funded key
 `bun run wallet` reports). It never echoes the key, and only that one line of

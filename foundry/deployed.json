@@ -1,0 +1,28 @@
+{
+  "network": "elysium-testnet",
+  "chainId": 99801,
+  "deployer": "0xa50a2F34Fbbead8DeFC22963Dc77b77EE91B8D2E",
+  "explorer": "https://elysium.kinetiq.xyz/testnet-explorer",
+  "sourceVerified": false,
+  "deployedAt": "2026-09-27",
+  "note": "Addresses are read from transaction receipts, not forge stdout. The explorer has no verification API, so this file is the source of truth.",
+  "ElysiumStreamingToken": {
+    "address": "0xdc5a850c1cce4e7fe6a35976763698cd554864be",
+    "tx": "0xf5c50e6580f700604828665be8404576e3ec586ca9be879075ae715940a853d7",
+    "block": 494825,
+    "gasUsed": 741845,
+    "codeBytes": 2821,
+    "name": "Open Exchange Token",
+    "symbol": "OEX",
+    "totalSupply": "1000000.0",
+    "emissionPerSecond": "1.0"
+  },
+  "ElysiumQuoteBook": {
+    "address": "0xb5681268c210e14732e7c1e0a0847eef764dbc5e",
+    "tx": "0x567a4b58f7c51961ff779cd1c2f97d4998b31994115b6852e487becbecc6d357",
+    "block": 494838,
+    "gasUsed": 468109,
+    "codeBytes": 1898,
+    "minIntervalSeconds": 5
+  }
+}

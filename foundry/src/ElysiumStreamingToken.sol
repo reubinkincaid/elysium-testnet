@@ -28,6 +28,11 @@ pragma solidity 0.8.28;
 /// construction. The only privileged-ish action is a voluntary `accrue()`,
 /// which can only ever push accrual *forward* to the current block.
 contract ElysiumStreamingToken {
+    /// @dev Revert-string prefix. Was "EST:" before the ticker became OEX;
+    ///      kept as one constant so a rename cannot leave the contract
+    ///      advertising a stale symbol in its revert data.
+    string private constant ERR = "OEX:";
+
     // ------------------------------------------------------------- ERC-20
     // Ticker note: "OEX" is a nod to 0xArchive, whose HyperCore L4 feed this
     // work is built against. Deliberately NOT spelled "0x..." — a symbol
@@ -64,7 +69,7 @@ contract ElysiumStreamingToken {
 
     /// @notice Constructor: all supply is initially assigned to `recipient`.
     constructor(uint256 initialSupply, uint256 emissionPerSecond_, address recipient) {
-        require(recipient != address(0), "EST: recipient is zero");
+        require(recipient != address(0), string.concat(ERR, " recipient is zero"));
         totalSupply = initialSupply;
         emissionPerSecond = emissionPerSecond_;
         lastAccrual = block.timestamp;
@@ -110,7 +115,7 @@ contract ElysiumStreamingToken {
     function claim() public returns (uint256 amount) {
         uint256 last = lastAccrual;
         uint256 nowTs = block.timestamp;
-        require(nowTs > last, "EST: nothing to accrue");
+        require(nowTs > last, string.concat(ERR, " nothing to accrue"));
 
         uint256 supply = totalSupply;
         uint256 elapsed = nowTs - last;
@@ -167,7 +172,7 @@ contract ElysiumStreamingToken {
 
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
         uint256 allowed = allowance[from][msg.sender];
-        require(allowed >= value, "EST: insufficient allowance");
+        require(allowed >= value, string.concat(ERR, " insufficient allowance"));
         if (allowed != type(uint256).max) {
             allowance[from][msg.sender] = allowed - value;
         }
@@ -183,8 +188,8 @@ contract ElysiumStreamingToken {
     }
 
     function _transfer(address from, address to, uint256 value) internal {
-        require(to != address(0), "EST: transfer to zero");
-        require(balanceOf[from] >= value, "EST: insufficient balance");
+        require(to != address(0), string.concat(ERR, " transfer to zero"));
+        require(balanceOf[from] >= value, string.concat(ERR, " insufficient balance"));
         unchecked {
             balanceOf[from] -= value;
             balanceOf[to] += value;

@@ -119,12 +119,12 @@ contract ElysiumStreamingTokenTest is Test {
         assertEq(token.balanceOf(other), 40 ether);
     }
     function test_cannot_overspend_balance() public {
-        vm.expectRevert("EST: insufficient balance");
+        vm.expectRevert("OEX: insufficient balance");
         token.transfer(other, INITIAL + 1);
     }
 
     function test_cannot_transfer_to_zero() public {
-        vm.expectRevert("EST: transfer to zero");
+        vm.expectRevert("OEX: transfer to zero");
         token.transfer(address(0), 1);
     }
 
@@ -149,7 +149,7 @@ contract ElysiumStreamingTokenTest is Test {
     }
 
     function test_claim_reverts_when_nothing_to_accrue() public {
-        vm.expectRevert("EST: nothing to accrue");
+        vm.expectRevert("OEX: nothing to accrue");
         token.claim();
     }
 }
