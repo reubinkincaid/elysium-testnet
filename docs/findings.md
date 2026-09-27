@@ -200,10 +200,10 @@ from "no perps exist" — worth remembering when the numbers ever look wrong.
 
 Every Elysium ERC-20 in the sampled window is one of two contracts:
 
-| | count | bytecode | totalSupply |
-|---|---|---|---|
-| `ETT` "Elysium Test Token" | 13 | **identical** (sha256 `d4ff51a5…`) | 1,000,000 each |
-| `ENFT` "Elysium Test NFT" | 10 | **identical** (sha256 `16812902…`) | n/a (ERC-721 style) |
+| | count | bytecode | totalSupply | decimals |
+|---|---|---|---|---|
+| `ETT` "Elysium Test Token" | 13 | **identical** (sha256 `d4ff51a5…`) | 1,000,000 each | 18 |
+| `ENFT` "Elysium Test NFT" | 10 | **identical** (sha256 `16812902…`) | n/a (ERC-721) | — |
 
 **All 13 ETTs are byte-for-byte the same contract, and all 10 ENFTs are the
 same contract as each other.** They are not independently written — they are
@@ -211,9 +211,33 @@ one template deployed repeatedly by different wallets, with different names
 that all resolve to the same literal "Elysium Test Token" / "ETT".
 
 **None of them trade.** Across the last 5,000 blocks there were 810 Transfer
-logs from 488 distinct tokens, and the 23 ETT/ENFT contracts account for them
-appearing in the list but generate **zero** transfer activity of their own.
-`totalSupply` is 1,000,000 and unmoved from deployment.
+logs from 488 distinct tokens, and the 23 ETT/ENFT contracts generate **zero**
+transfer activity of their own.
+
+### Contract audit (dispatcher-level, static)
+
+ETT exposes exactly nine functions — a **plain, complete ERC-20 and nothing
+else**:
+
+```
+name()  symbol()  decimals()  totalSupply()  balanceOf()
+transfer()  transferFrom()  approve()  allowance()
+```
+
+ENFT is a **stock OpenZeppelin ERC-721** (`supportsInterface(0x01ffc9a7)`,
+`safeTransferFrom(0x42842e0e)`, `ownerOf(0x6352211e)`, `tokenURI`, etc.).
+
+**Correction to an earlier reading in this file:** an initial probe suggested
+`mint(address,uint256)` might be publicly callable. That was wrong. Reconstructing
+the dispatcher (PUSH4 followed by EQ, rather than counting raw PUSH4 constants)
+shows `0x40c10f19` is **not present** in ETT at all. Supply is fixed at
+1,000,000 at construction. Neither template has a mint function, an owner, or
+any access control — because there is nothing to control. The earlier result
+came from calling an unknown selector, which reverts on any contract.
+
+**There is no vulnerability to exploit.** The templates are boring and correct.
+"Everyone is deploying the same buggy contract" is not what the chain shows.
+
 
 **Read:** this is a deployment-count race, not a build effort. ~40 testnet
 users, one tutorial or template, everyone deploying the same throwaway token
@@ -225,11 +249,16 @@ Two implications for strategy:
 
 1. **It confirms a points race is already underway** among the small user
    base, which is the competition any real build is measured against.
-2. **It is the cheap play and it is already saturated.** ~13 people have done
-   it; the marginal deployer adds nothing. Whatever criteria they use, a
-   repeated template cannot plausibly be the scoring target — which is
-   another argument that the 25% blockspace-consumption share, not a
-   deploy-count leaderboard, is the thing worth building toward.
+2. **The identical-bytecode fact does not, by itself, saturate the play.**
+   Thirteen copies of one template produces thirteen near-identical artifacts.
+   If the eventual criterion is a leaderboard, that ties — and a *distinct*
+   contract, or one that does something the template does not, is not
+   competing against the same slot. It also means there is nothing to
+   exploit: the templates are correct, so the differentiator has to be
+   capability, not a bug.
+
+So the earlier claim that this play is "already saturated" was too strong.
+Saturated against *another copy*; not saturated against *a different thing*.
 
 Note also 488 distinct tokens with transfer activity chain-wide vs 38 seen in
 the ERC-20 metadata sweep — most testnet tokens are unidentified by
