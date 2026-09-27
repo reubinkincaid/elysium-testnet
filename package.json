@@ -9,7 +9,8 @@
     "blocktime": "bun run src/blocktime.ts",
     "feed": "bun run src/feed.ts",
     "endpoints": "bun run src/endpoints.ts",
-    "bridge": "bun run src/bridge.ts"
+    "bridge": "bun run src/bridge.ts",
+    "wallet": "bun run src/wallet.ts"
   },
   "dependencies": {
     "viem": "^2.21.0",

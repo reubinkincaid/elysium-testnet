@@ -110,9 +110,39 @@ bun run endpoints   # compare Kinetiq vs Conduit RPC, latency
 bun run blocktime   # measure block time vs the 100-200ms claim
 bun run feed        # consume the Conduit sequencer feed
 bun run bridge      # bridge route math + retryable surface, both chains
+bun run wallet      # testnet key: generate/load, show balances on both chains
 ```
 
 Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`.
+
+## Testnet wallet
+
+`bun run wallet` generates a throwaway key into `.env` (mode 600, gitignored)
+if none exists, then reports balances and nonces on **both** chains plus what
+the current balance buys in transactions. The private key is never printed.
+`bun run wallet --new` rotates it.
+
+```
+address  0xd2B398025B4D635b2C45Ff5CDf67606D9A2B539C
+  Elysium (99801)          0.000000 HYPE   nonce 0
+  HyperEVM (998)           0.000000 HYPE   nonce 0
+```
+
+**Funding is browser-only by design.** Two steps, both manual:
+
+1. **Elysium faucet** — <https://elysium.kinetiq.xyz/testnet-faucet>. Mints
+   testnet HYPE delivered to Elysium. Ships explicit bot detection
+   (`"This request looked automated"`) and a per-address cooldown. Claim once,
+   by hand. There is no faucet contract and none should be scripted.
+2. **HyperEVM testnet faucet** — <https://app.hyperliquid-testnet.xyz/drip>,
+   only if the Elysium faucet asks for parent-chain HYPE first. This one *is*
+   scriptable: a single unauthenticated `claimDrip` call to
+   `https://api.hyperliquid-testnet.xyz/info`. It mints **mock USDC, not
+   HYPE**, so it is not a substitute for step 1.
+
+Once funded, re-run `bun run wallet` to confirm arrival. A ~0.1 HYPE balance
+covers roughly 66,000 transactions at 0.01 gwei, so topping up is rarely
+the problem.
 
 ## Not pursued
 
