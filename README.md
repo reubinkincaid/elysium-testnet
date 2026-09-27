@@ -118,6 +118,37 @@ bun run universe    # which assets exist on both Elysium and HyperCore
 Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`. Bun auto-loads `.env`,
 so no dotenv dependency is needed.
 
+## Secret protection
+
+`.env` holds three live credentials (Conduit, 0xArchive, and the testnet wallet
+key) and is gitignored. A **pre-commit hook** blocks them from entering history
+in two independent layers:
+
+1. **Exact match** against the real values in `.env`. Strongest layer — reads
+   the actual secrets and greps the staged diff for them, so an accidental paste
+   of a key the hook has never seen is still caught. A regex cannot do this
+   reliably for an unknown 64-char string.
+2. **gitleaks** for generic provider patterns (GitHub PATs, Slack webhooks,
+   private-key blocks) — catches secrets from sources layer 1 has never seen.
+
+Plus a guard that refuses to commit `.env` or any `*.key` / `*.pem`.
+
+```bash
+./scripts/install-hooks.sh     # after a fresh clone
+```
+
+`.git/hooks` is not version-controlled, so the hook is tracked at
+`scripts/pre-commit-hook` and copied into place. Needs `brew install gitleaks`
+for layer 2; layer 1 works without it.
+
+**Verified** against: each of the three real `.env` keys, a GitHub PAT, a Slack
+webhook, and a staged `.env` — all blocked; a clean file, an empty stage, and a
+normal commit — all allowed. A known limitation: layer 1 flags
+`ELYSIUM_RPC` appearing in `.env.example`, because the example file legitimately
+contains that endpoint and the value is also in `.env`. Stage `.env.example`
+only when actually changing it, or use `--no-verify` after confirming the
+change is safe.
+
 ## Data sources
 
 | Key | Used for |
