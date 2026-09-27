@@ -339,3 +339,59 @@ The genuinely patient play is to let the consolidation resolve. A close above
 resolves the question, and the TWAP plan means you do not need to catch the
 exact bottom — you can start a long-duration TWAP once direction is clearer
 and still fill inside the 3% cap, because TWAP works over hours, not ticks.
+
+## Correction: TWAP runs are 7 days, not 1440 minutes
+
+Earlier I wrote `m: 1440` (24h) as the ceiling. That was wrong — I took
+`m: 1440` from a third-party schema and repeated it without checking the
+official docs. Hyperliquid's own order-types page says:
+
+> Running time can be set from 5 minutes to 7 days, with a $100 minimum
+> total order size.
+
+Shipped **2026-08-03** in the TWAP expansion. So `m` maxes at **10,080**.
+
+### What else changed in that same release
+
+Three features matter more for this entry than the longer window does:
+
+1. **Trigger price** — the TWAP sits dormant until mark price reaches your
+   level, then activates. This turns "wait for the consolidation to resolve"
+   from a manual chore into an order parameter.
+2. **Max price** — for a buy, the TWAP **terminates** if mark crosses your
+   ceiling. This is the risk control that a plain long TWAP lacks: it stops
+   you from filling the rest of a 50,000-token order into a spike.
+3. **Dynamic sub-order intervals** — cadence is computed from size and
+   duration rather than fixed. The exact algorithm is not published, so
+   per-slice timing is a planning estimate, not a guarantee.
+
+### Revised order for the setup discussed
+
+This is a *shape*, not a recommendation to execute. Levels are the ones
+measured in the price-action section above.
+
+```json
+{ "type": "twapOrder",
+  "twap": { "a": 334, "b": true, "s": "50000", "r": false,
+            "m": 10080, "t": true } }
+```
+
+With trigger and max price set around it — the wire action carries them as
+additional fields (exact key names should be confirmed against the live SDK
+before signing; the `a/b/s/r/m/t` shape is from the exchange-endpoint docs).
+
+- `m: 10080` — 7 days. At $16,045 that is ~$95/hour average.
+- `t: true` — randomize slice sizes ±20%.
+- **Trigger ~$0.353** — only starts if the consolidation resolves upward.
+  Respects the "don't chase" instinct mechanically.
+- **Max ~$0.353** — if it triggers on the breakout, this caps how far above
+  the trigger the rest of the order will fill.
+
+The trigger/max pair is the useful part. A 7-day TWAP is a 7-day obligation
+to buy; adding a ceiling means the worst case is "bought partway, stopped at
+a level you chose" rather than "filled the whole 50,000 into a blowoff."
+
+Caveat to verify before signing: the sub-order minimum is $10 notional, and
+dynamic intervals mean the realized schedule will not match a simple
+size/duration division. Watch `user_twap_slice_fills` rather than assuming a
+linear pace.
