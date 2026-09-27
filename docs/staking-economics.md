@@ -196,3 +196,74 @@ So the sequence that actually makes sense:
 The Elysium read still stands and is unchanged: 50% of sequencer revenue
 funds KNTQ buybacks that accrue to sKNTQ holders. If you are going to hold
 sKNTQ, the question is entry price and timing, not whether the thesis works.
+
+## TWAP: correct tool, with a hard cap that decides the schedule
+
+Spot TWAP is available on Hyperliquid via the `twapOrder` exchange action
+with a **spot asset id**, so it applies to KNTQ/USDC. Pair index is `334`
+(`@334`, tokens [124, 0]).
+
+Action shape:
+
+```json
+{ "type": "twapOrder",
+  "twap": { "a": 334, "b": true, "s": "50000", "r": false, "m": 1440, "t": true } }
+```
+
+`a` = asset id 334, `b` = true for buy, `s` = size in **base tokens**
+(50000, not USD), `r` = reduce-only, `m` = duration in minutes (5–1440, i.e.
+up to 24h), `t` = randomize sub-order sizes ±20%.
+
+Note: the official Python SDK does not expose `twapOrder`; the wire action
+must be signed and POSTed directly, or via the `@nktkas/hyperliquid` TS SDK.
+TWAP actions carry no `builder` field, so no builder attribution.
+
+### The binding constraint: 3% sub-order slippage
+
+Each sub-order is capped at **3% slippage**, venue-side. That is what sets
+the pace, and it is not adjustable.
+
+Measured: best ask $0.3209, so the sub-order ceiling is ~**$0.3305**. Anything
+worse than +3% from the touch does not fill, and the TWAP falls behind its
+execution target.
+
+What the book looks like against that ceiling:
+
+| Cumulative | Price | vs best ask |
+|---|---|---|
+| $1,095 | $0.32100 | +0.03% |
+| $2,228 | $0.32128 | +0.13% |
+
+The visible book only stays inside 3% for roughly the first **$2–3k** of
+notional. Beyond that you are above the cap and sub-orders will not fill
+reliably.
+
+**So: TWAP over a long duration is mandatory, not a preference.** At
+$16,045 total, a 24h TWAP is ~$11/hour average, which spreads across many
+sub-orders and lets the book refill between them. A short-duration TWAP
+would bunch sub-orders into a static book and mostly fail to fill.
+
+Sizing sanity check from the docs: a $10,000 order over 1 hour splits into
+~121 sub-orders of ~$83 every 30 seconds. That cadence would eat the whole
+$10k ask side in minutes. **Do not use short durations here.**
+
+### Other caveats
+
+- $100 minimum total order size.
+- Duration is 5 minutes to 7 days on the wire per one reference, 5–1440
+  minutes per another. 1440 (24h) is the safe common denominator.
+- If sub-orders do not fill, later sub-orders may grow to 3x normal size —
+  which makes unfilled slices *worse* in a thin book, not better.
+- No builder attribution, so no builder fees or referral credit from a TWAP.
+
+### Revised execution plan
+
+1. Check Lit / Based books first. Deeper venue beats any TWAP schedule.
+2. If Hyperliquid spot is the venue: TWAP buy, `a=334`, `b=true`,
+   `s=50000`, `m=1440`, `t=true`. 24 hours, randomized.
+3. Monitor fill progress via `user_twap_slice_fills`. If it lags badly,
+   the 3% ceiling is being hit and you should slow down rather than resize up.
+4. Consider buying in tranches below 50k and staking once, rather than
+   crossing 50k in one TWAP — smaller TWAPs are easier to fill inside 3%.
+5. Re-verify the book before starting. It moved from 32,724 to 31,252 KNTQ
+   between my two measurements in minutes; depth is not stable.
