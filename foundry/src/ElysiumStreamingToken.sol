@@ -29,8 +29,16 @@ pragma solidity 0.8.28;
 /// which can only ever push accrual *forward* to the current block.
 contract ElysiumStreamingToken {
     // ------------------------------------------------------------- ERC-20
-    string public constant name = "Elysium Streaming Token";
-    string public constant symbol = "EST";
+    // Ticker note: "OEX" is a nod to 0xArchive, whose HyperCore L4 feed this
+    // work is built against. Deliberately NOT spelled "0x..." — a symbol
+    // starting with "0x" is valid hex and the shape of a truncated address,
+    // so naive `startsWith("0x")` parsers misread it as a numeric value.
+    // Checked clean against Elysium testnet and Hyperliquid's 212 perps.
+    //
+    // Both strings are `constant`, so they are permanent in the bytecode.
+    // Changing them requires a new deployment, not a setter.
+    string public constant name = "Open Exchange Token";
+    string public constant symbol = "OEX";
     uint8 public constant decimals = 18;
 
     uint256 public totalSupply;

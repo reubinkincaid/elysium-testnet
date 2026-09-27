@@ -211,11 +211,18 @@ so it is the single command to re-check status at any point.
 Two Solidity contracts, built with Foundry. Neither has an owner, a mint role,
 an upgrade path, or a privileged function.
 
-**`ElysiumStreamingToken.sol`** (EST) — fixed 1,000,000 initial supply, then
-1 EST/sec accruing from `lastAccrual` to `block.timestamp`, distributed pro-rata
+**`ElysiumStreamingToken.sol`** (OEX) — fixed 1,000,000 initial supply, then
+1 OEX/sec accruing from `lastAccrual` to `block.timestamp`, distributed pro-rata
 by supply share. `accrue()` is permissionless. The point is that state is
 *maintained over time* rather than set once, which the other 13 Elysium testnet
 tokens do not do. Streaming is only viable because blockspace is near-free here.
+
+Name is "Open Exchange Token", symbol `OEX` — a nod to 0xArchive, whose
+HyperCore L4 feed this work is built against. Deliberately not spelled `0x…`:
+a symbol starting with `0x` is valid hex and the shape of a truncated address,
+so naive `startsWith("0x")` parsers misread it. Checked clean against Elysium
+testnet and Hyperliquid's 212 perps. Both strings are `constant`, so they are
+permanent in the bytecode.
 
 **`ElysiumQuoteBook.sol`** — two-sided quote per token with a `minInterval`
 cadence dial, publishes spread in bps, and reports **staleness** rather than
@@ -238,6 +245,13 @@ forge build
 `forge-std` is a git submodule, not vendored. Build artifacts
 (`out/`, `cache/`, `broadcast/`) are gitignored; `src/`, `test/`,
 `foundry.toml`, `deploy.sh` and `deployed.json` are committed.
+
+**The testnet explorer has no source-verification API** (probed 2026-09-27:
+`/api`, `?module=contract&action=verifysourcecode`, and `/api/v2/...` all
+return 404). Deployed contracts therefore appear as unnamed `Contract` chips.
+`forge verify-contract` cannot succeed, so this repo and `deployed.json` are
+the source of truth for what was deployed. `deploy.sh` has a `VERIFY_API`
+flag to re-probe and enable it if that ever changes.
 
 ## Not pursued
 

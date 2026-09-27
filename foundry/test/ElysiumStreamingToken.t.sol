@@ -33,8 +33,8 @@ contract ElysiumStreamingTokenTest is Test {
     }
 
     function test_symbols() public view {
-        assertEq(token.name(), "Elysium Streaming Token");
-        assertEq(token.symbol(), "EST");
+        assertEq(token.name(), "Open Exchange Token");
+        assertEq(token.symbol(), "OEX");
         assertEq(token.decimals(), 18);
     }
 
