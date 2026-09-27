@@ -140,9 +140,23 @@ address  0xd2B398025B4D635b2C45Ff5CDf67606D9A2B539C
    `https://api.hyperliquid-testnet.xyz/info`. It mints **mock USDC, not
    HYPE**, so it is not a substitute for step 1.
 
-Once funded, re-run `bun run wallet` to confirm arrival. A ~0.1 HYPE balance
-covers roughly 66,000 transactions at 0.01 gwei, so topping up is rarely
-the problem.
+Once funded, re-run `bun run wallet` to confirm arrival.
+
+**Measured 2026-09-27: the faucet pays 1 HYPE, not 0.1.** The 0.1 figure
+below is an estimate from other wallets' balances and was wrong by 10x.
+
+```
+address  0xa50a2F34Fbbead8DeFC22963Dc77b77EE91B8D2E
+  Elysium (99801)          1.000000 HYPE   nonce 0
+  HyperEVM (998)           0.000000 HYPE   nonce 0
+  baseFee        0.01 gwei
+  per tx         1.50e-6 HYPE
+  this balance buys ~666,666 transactions
+```
+
+So funding is genuinely solved: 1 HYPE is ~667k transactions of headroom and
+the faucet will not need re-claiming. The binding constraint on this chain is
+legitimacy, not HYPE.
 
 ### Faucet setup: it needs a connected wallet
 

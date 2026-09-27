@@ -156,9 +156,14 @@ There is **no faucet contract on Elysium**. The claim is browser-only, has
 explicit bot detection and a per-address cooldown, and funds originate on
 **HyperEVM testnet** before crossing. Claim once, manually. Never script it.
 
-Faucet drip is ~0.1 HYPE. At 0.01 gwei baseFee and ~150k gas, that is
-~66,000 transactions, so funding is ample and the constraint is *legitimacy*,
-not HYPE.
+Faucet pays **1 HYPE** per claim (measured 2026-09-27, not the 0.1 that
+other wallets' balances suggested). The claim itself is a server-side POST —
+`/api/faucet/<network>` with `{address}` and no signature — but the endpoint
+fingerprints the client and returns `{"error":"bot"}` to anything that is not
+a real browser. Claiming is a manual browser step by design.
+
+1 HYPE at 0.01 gwei and ~150k gas is ~**667,000 transactions**, so funding is
+not a constraint on anything built here. The binding constraint is legitimacy.
 
 ## Ecosystem snapshot
 
