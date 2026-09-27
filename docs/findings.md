@@ -115,6 +115,51 @@ Single samples, not a benchmark:
 Both returned identical head blocks, so they are the same chain. The
 Kinetiq-hosted endpoint was faster here, but n=1 each — not a conclusion.
 
+## Bridge lifecycle (measured 2026-09-27, `bun run bridge`)
+
+Route math resolves on both chains and cross-checks:
+
+```
+L2 side    getGateway(0x0)                 0x30545d8b24185DdFe83E75aB6939f867b664e2E1
+           calculateL2TokenAddress(0x0)    0x278eF9E593113BB354377445b30dB1967bc97baD
+parent     L1GatewayRouter                 0x1aAE2caD...7C45, 2202B deployed
+           calculateL2TokenAddress(0x0)    0x278eF9E5...7baD   <-- matches L2
+```
+
+**The parent RPC needs the `/evm` suffix.** `https://rpc.hyperliquid-testnet.xyz`
+returns HTTP 404; `https://rpc.hyperliquid-testnet.xyz/evm` returns `0x3e6`
+(998). The bare host is a different service. `config.ts` previously had the
+bare host, which meant any parent-chain call failed.
+
+**The retryable ticketer is not deployed on Elysium testnet.**
+`0x00000000000000000000000000000000000000E5` (the Arbitrum `RetryableTicketer`
+predeploy) has no code. It also could not be recovered by scanning HyperEVM
+traffic — the parent chain is too quiet to trace a deposit. So:
+
+- The **route math is scriptable today**.
+- The **HyperEVM -> Elysium deposit leg is not**, until the ticketer address
+  is published or the run is done through the web UI.
+- Do **not** hardcode a guessed ticketer address. Re-run `bun run bridge`
+  at mainnet and let it report.
+
+### Faucet is deliberately not automatable
+
+Extracted verbatim from the site's own i18n payload, not inferred:
+
+```
+"bot":      "This request looked automated. Refresh the page and try again."
+"cooldown": "You've already claimed. Come back {time}."
+"empty":    "The faucet is out of HYPE for now. Try again later."
+```
+
+There is **no faucet contract on Elysium**. The claim is browser-only, has
+explicit bot detection and a per-address cooldown, and funds originate on
+**HyperEVM testnet** before crossing. Claim once, manually. Never script it.
+
+Faucet drip is ~0.1 HYPE. At 0.01 gwei baseFee and ~150k gas, that is
+~66,000 transactions, so funding is ample and the constraint is *legitimacy*,
+not HYPE.
+
 ## Ecosystem snapshot
 
 Three public repos touching the testnet as of 2026-09-26, all created within

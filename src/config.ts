@@ -17,7 +17,10 @@ export const ELYSIUM_TESTNET = {
     chainId: 998,
     name: "HyperEVM Testnet",
     // Parent chain for settlement + the DA certificate.
-    rpc: "https://rpc.hyperliquid-testnet.xyz",
+    // The /evm path is required: the bare host answers 404. Verified
+    // 2026-09-27 — eth_chainId at the bare host returns HTTP 404, and
+    // 0x3e6 (998) with the suffix.
+    rpc: "https://rpc.hyperliquid-testnet.xyz/evm",
   },
 
   explorer: "https://elysium.kinetiq.xyz/testnet-explorer",

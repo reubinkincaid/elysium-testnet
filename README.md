@@ -109,6 +109,7 @@ bun run probe       # chain health + which contracts are deployed
 bun run endpoints   # compare Kinetiq vs Conduit RPC, latency
 bun run blocktime   # measure block time vs the 100-200ms claim
 bun run feed        # consume the Conduit sequencer feed
+bun run bridge      # bridge route math + retryable surface, both chains
 ```
 
 Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`.
