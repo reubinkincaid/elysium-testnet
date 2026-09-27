@@ -165,6 +165,53 @@ a real browser. Claiming is a manual browser step by design.
 1 HYPE at 0.01 gwei and ~150k gas is ~**667,000 transactions**, so funding is
 not a constraint on anything built here. The binding constraint is legitimacy.
 
+## Blockspace economics (measured 2026-09-27, `bun run economics`)
+
+Prices the docs' claim that fees are tuned for 5–10 quote refreshes/sec, and
+prices the 25% builder share. All figures computed from measured `baseFee` and
+`gasLimit`, with explicit per-shape gas models.
+
+| shape | gas | HYPE/tx | HYPE/hr @10Hz |
+|---|---|---|---|
+| plain transfer | 21,000 | 2.10e-7 | 0.00756 |
+| counter update (warm) | 22,100 | 2.21e-7 | 0.00796 |
+| counter update (cold) | 46,000 | 4.60e-7 | 0.01656 |
+| quote publish | 50,000 | 5.00e-7 | 0.01800 |
+| **quote refresh** | **85,000** | **8.50e-7** | **0.03060** |
+| AMM swap | 150,000 | 1.50e-6 | 0.05400 |
+
+Runtime per 1 HYPE, quote-refresh shape:
+
+```
+  1 Hz    0.003060 HYPE/hr    ~327 hours
+  5 Hz    0.015300 HYPE/hr    ~65 hours    <- docs' tuned band
+ 10 Hz    0.030600 HYPE/hr    ~33 hours    <- docs' tuned band
+ 50 Hz    0.153000 HYPE/hr    ~6.5 hours
+```
+
+**The docs' claim checks out.** At 8 Hz a refresh costs 0.0245 HYPE/hr, so a
+full day of quoting burns 0.59 HYPE — sustainable, though not free. The
+honest phrasing is that 5–10 Hz is *affordable*, not that it is *cheap*; an
+earlier note here said "effectively free", which overstated it.
+
+**`baseFee` is flat at 0.01 gwei and is not congestion-priced.** Blocks run
+21k–840k gas against a 1.1e15 limit, i.e. under 0.000001% utilisation. So
+fees cannot rise no matter how full the chain gets, which constrains what the
+25% builder share can actually be worth under a fee-based interpretation.
+
+### The open question that decides the strategy
+
+The 25% "apps consuming blockspace" share is ambiguous in a way that matters:
+
+- **Pro-rata on blockspace consumed** — the share accrues to whoever fills
+  blocks. On a near-empty chain the absolute amounts are tiny either way, so
+  the play is establishing position, not revenue.
+- **Fee-based** — then the flat `baseFee` caps it, since the chain has an
+  incentive to keep fees low to hit its own throughput claims.
+
+Which one applies is not published. It is the most useful thing to ask the
+Kinetiq team, alongside the retryable ticketer address and the upgrade date.
+
 ## Ecosystem snapshot
 
 Three public repos touching the testnet as of 2026-09-26, all created within

@@ -111,6 +111,7 @@ bun run blocktime   # measure block time vs the 100-200ms claim
 bun run feed        # consume the Conduit sequencer feed
 bun run bridge      # bridge route math + retryable surface, both chains
 bun run wallet      # testnet key: generate/load, show balances on both chains
+bun run economics   # price blockspace: cost per tx shape, 25% builder share
 ```
 
 Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`.
