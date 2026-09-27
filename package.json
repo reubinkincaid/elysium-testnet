@@ -11,7 +11,8 @@
     "endpoints": "bun run src/endpoints.ts",
     "bridge": "bun run src/bridge.ts",
     "wallet": "bun run src/wallet.ts",
-    "economics": "bun run src/economics.ts"
+    "economics": "bun run src/economics.ts",
+    "universe": "bun run src/universe.ts"
   },
   "dependencies": {
     "viem": "^2.21.0",

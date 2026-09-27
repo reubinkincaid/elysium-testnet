@@ -51,6 +51,39 @@ export const hasConduitKey = Boolean(conduitKey);
 /** Default RPC for scripts that just need to read the chain. */
 export const DEFAULT_RPC = process.env.ELYSIUM_RPC ?? ELYSIUM_TESTNET.publicRpc;
 
+// ---------------------------------------------------------------- 0xArchive
+/**
+ * 0xArchive API key for HyperCore data. Never printed, never committed.
+ *
+ * Two names are accepted because both exist in the wild: the current
+ * `OXARCHIVE_API_KEY` and the legacy `OX_ARCHIVE_API_KEY` that ships in the
+ * 0xArchive skill docs. Accept either so a key pasted from either source
+ * works without editing.
+ *
+ * Bun auto-loads `.env`, so no dotenv dependency is needed for this.
+ */
+export const OXARCHIVE_KEY = (
+  process.env.OXARCHIVE_API_KEY ?? process.env.OX_ARCHIVE_API_KEY
+)?.trim();
+
+/** True when a 0xArchive key is available, for gating optional features. */
+export const hasOxArchiveKey = Boolean(OXARCHIVE_KEY);
+
+const OX_BASE = "https://api.0xarchive.io";
+
+/** Authenticated REST GET against 0xArchive. Throws on API error. */
+export async function oxGet<T>(path: string): Promise<T> {
+  if (!OXARCHIVE_KEY) throw new Error("no 0xArchive key — set OXARCHIVE_API_KEY in .env");
+  const res = await fetch(`${OX_BASE}${path}`, {
+    headers: { "x-api-key": OXARCHIVE_KEY },
+  });
+  const body = (await res.json()) as { data?: T; error?: string; code?: number };
+  if (!res.ok || body.error) {
+    throw new Error(`0xArchive ${res.status} ${path}: ${body.error ?? "unknown"}`);
+  }
+  return body.data as T;
+}
+
 /**
  * Strip an API key from a URL so it can be printed.
  *

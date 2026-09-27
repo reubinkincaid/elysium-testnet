@@ -165,6 +165,37 @@ a real browser. Claiming is a manual browser step by design.
 1 HYPE at 0.01 gwei and ~150k gas is ~**667,000 transactions**, so funding is
 not a constraint on anything built here. The binding constraint is legitimacy.
 
+## The arb universe is empty on testnet (measured 2026-09-27, `bun run universe`)
+
+Cross-venue arb needs an asset quoted in two places. Measured:
+
+```
+HyperCore perps      234
+HyperCore spot pairs 330 (316 distinct bases)
+Elysium ERC-20s seen  38
+Intersection         0
+```
+
+**Nothing on Elysium testnet has a HyperCore listing.** Every token observed
+is `ETT` ("Elysium Test Token") or `ENFT` ("Elysium Test NFT") — and there
+are *many distinct deployments of each* (14 ETT, 10+ ENFT in the sample),
+which confirms the token-deployment race among the ~42 real testnet users.
+
+Two consequences:
+
+1. **Cross-venue arb cannot be tested on testnet.** It is a mainnet play.
+   The strategy work that *is* testable now is the Elysium leg model: inject
+   an assumed block time (100ms vs the measured 420–750ms) and measure how
+   much spread survives execution. That needs no Elysium market data.
+2. **The Elysium-only tokens are the interesting early signal** — they are
+   candidates for the graduation path the docs describe (Elysium AMM →
+   prop-AMM → HyperCore spot → HIP-3 perp). Watching for a bridged or
+   listed one is a leading indicator.
+
+Implementation note: 0xArchive perps return the ticker in `name`, not
+`symbol`. Reading `symbol` yields an empty perp set, which is indistinguishable
+from "no perps exist" — worth remembering when the numbers ever look wrong.
+
 ## Blockspace economics (measured 2026-09-27, `bun run economics`)
 
 Prices the docs' claim that fees are tuned for 5–10 quote refreshes/sec, and

@@ -112,9 +112,38 @@ bun run feed        # consume the Conduit sequencer feed
 bun run bridge      # bridge route math + retryable surface, both chains
 bun run wallet      # testnet key: generate/load, show balances on both chains
 bun run economics   # price blockspace: cost per tx shape, 25% builder share
+bun run universe    # which assets exist on both Elysium and HyperCore
 ```
 
-Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`.
+Override endpoints with `ELYSIUM_RPC` / `ELYSIUM_FEED`. Bun auto-loads `.env`,
+so no dotenv dependency is needed.
+
+## Data sources
+
+| Key | Used for |
+|---|---|
+| `CONDUIT_API_KEY` | Conduit RPC + sequencer feed (rate limits lifted) |
+| `ELYSIUM_TESTNET_KEY` | throwaway testnet key for `bun run wallet` |
+| `OXARCHIVE_API_KEY` (or legacy `OX_ARCHIVE_API_KEY`) | HyperCore data via 0xArchive — Pro tier, needed for L4 channels |
+
+None are ever printed. `.env` is gitignored and chmod 600.
+
+**0xArchive lead over the public Hyperliquid API** (from their published
+latency race, 2026-09-27, 24h windows):
+
+```
+Tokyo    494,004 matched pairs  Stream first 99.78%  p50 lead  67.5ms  p90 147.5ms
+US East  493,972 matched pairs  Stream first 99.58%  p50 lead  72.5ms  p90 202.5ms
+```
+
+Payloads are 100% identical (same price, size, time, hash) — no synthesis. Tokyo
+wins mainly in the tail (p90 147.5ms vs 202.5ms), which is where latency
+strategy actually lives. Pro tier unlocks `l4_diffs` / `l4_orders`, which the
+official feed does not provide at all.
+
+Caveat: this measures *HyperCore → your feed*. It says nothing about the
+Elysium leg, which is the slower one and the real constraint.
+
 
 ## Testnet wallet
 
